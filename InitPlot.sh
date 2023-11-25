@@ -174,35 +174,47 @@ EOL
 systemctl enable pl-server.service
 systemctl start pl-server.service
 
-#!/bin/sh
-export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64
-export PATH=$PATH:$JAVA_HOME/bin
 
-cd /usr/local
-wget --tries=0 --retry-connrefused --waitretry=5 --read-timeout=20 --no-check-certificate https://archive.apache.org/dist/tomcat/tomcat-10/v10.0.22/bin/apache-tomcat-10.0.22.tar.gz
-tar xzf apache-tomcat-*.tar.gz
-rm -f apache-tomcat-*.tar.gz
-mv apache-tomcat-* tomcat
-cd /usr/local/tomcat
-keytool -genkey -alias tomcat -keystore tomcat.jks -keypass changeit -storepass changeit -keyalg RSA -keysize 2048 -validity 365 -v -dname "CN = PYH,OU = TestElement,O = TestElementRender,L = BUSAN,ST = BUSAN,C = KR"
-wget --tries=0 --retry-connrefused --waitretry=5 --read-timeout=20 --no-check-certificate https://raw.githubusercontent.com/vlaKoko/Storage/main/server.xml
-mv -f server.xml /usr/local/tomcat/conf/server.xml
-cd ~
+STATUS="$(systemctl is-active tomcat.service)"
+if [ "${STATUS}" = "active" ]; then
+    echo "Skip Tomcat Installation"
+else 
+	export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64
+	export PATH=$PATH:$JAVA_HOME/bin
 
-cd /tmp
-wget --tries=0 --retry-connrefused --waitretry=5 --read-timeout=20 --no-check-certificate https://archive.apache.org/dist/tomcat/tomcat-connectors/native/1.2.33/source/tomcat-native-1.2.33-src.tar.gz
-tar zxvf tomcat-native-*-src.tar.gz
-cd tomcat-native-1.2.33-src
-cd native
-./configure --with-apr=/usr/bin/apr-1-config \
-            --with-java-home=$JAVA_HOME \
-            --with-ssl=yes \
-            --prefix=/usr/local/tomcat
-make
-make install
-cd ..
-cd ..
-rm -rf tomcat-native-*
+	cd /usr/local
+	wget --tries=0 --retry-connrefused --waitretry=5 --read-timeout=20 --no-check-certificate https://archive.apache.org/dist/tomcat/tomcat-10/v10.0.22/bin/apache-tomcat-10.0.22.tar.gz
+	tar xzf apache-tomcat-*.tar.gz
+	rm -f apache-tomcat-*.tar.gz
+	mv apache-tomcat-* tomcat
+	cd /usr/local/tomcat
+	keytool -genkey -alias tomcat -keystore tomcat.jks -keypass changeit -storepass changeit -keyalg RSA -keysize 2048 -validity 365 -v -dname "CN = PYH,OU = TestElement,O = TestElementRender,L = BUSAN,ST = BUSAN,C = KR"
+	wget --tries=0 --retry-connrefused --waitretry=5 --read-timeout=20 --no-check-certificate https://raw.githubusercontent.com/vlaKoko/Storage/main/server.xml
+	mv -f server.xml /usr/local/tomcat/conf/server.xml
+	cd ~
+
+	cd /tmp
+	wget --tries=0 --retry-connrefused --waitretry=5 --read-timeout=20 --no-check-certificate https://archive.apache.org/dist/tomcat/tomcat-connectors/native/1.2.33/source/tomcat-native-1.2.33-src.tar.gz
+	tar zxvf tomcat-native-*-src.tar.gz
+	cd tomcat-native-1.2.33-src
+	cd native
+	./configure --with-apr=/usr/bin/apr-1-config \
+				--with-java-home=$JAVA_HOME \
+				--with-ssl=yes \
+				--prefix=/usr/local/tomcat
+	make
+	make install
+	cd ..
+	cd ..
+	rm -rf tomcat-native-*
+	
+cat > /usr/local/tomcat/bin/setenv.sh <<EOL
+CATALINA_PID="/usr/local/tomcat/pid"
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/tomcat/lib
+export LD_LIBRARY_PATH
+EOL
+#JAVA_OPTS="-server -XX:PermSize=256M -XX:MaxPermSize=1024m -Xms512M -Xmx1024M -XX:MaxNewSize=256m"
+chmod a+x  /usr/local/tomcat/bin/setenv.sh
 
 cat > /etc/systemd/system/tomcat.service <<EOL
 [Unit]
@@ -225,16 +237,11 @@ RestartSec=5s
 WantedBy=multi-user.target
 EOL
 
-cat > /usr/local/tomcat/bin/setenv.sh <<EOL
-CATALINA_PID="/usr/local/tomcat/pid"
-LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/tomcat/lib
-export LD_LIBRARY_PATH
-EOL
-#JAVA_OPTS="-server -XX:PermSize=256M -XX:MaxPermSize=1024m -Xms512M -Xmx1024M -XX:MaxNewSize=256m"
-chmod a+x  /usr/local/tomcat/bin/setenv.sh
+	systemctl enable tomcat.service
+	systemctl start tomcat.service
 
-systemctl enable tomcat.service
-systemctl start tomcat.service
+fi
+
 
 cat > /PlotHttpServer.py <<EOL
 #coding: utf-8
