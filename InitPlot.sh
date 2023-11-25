@@ -1,14 +1,17 @@
 apt-get update -y
-apt-get install -y gcc make libhugetlbfs-dev libc-dev libc6-dev build-essential g++ nvidia-cuda-toolkit build-essential cmake libgmp-dev libnuma-dev unzip openjdk-8-jdk libapr1 libapr1-dev libssl-dev
+apt-get install -y gcc make libhugetlbfs-dev libc-dev libc6-dev build-essential g++ nvidia-cuda-toolkit build-essential cmake libgmp-dev libnuma-dev unzip openjdk-8-jdk libapr1 libapr1-dev libssl-dev nload net-tools
 
-wget --tries=0 --retry-connrefused --waitretry=5 --read-timeout=20 --no-check-certificate https://developer.download.nvidia.com/compute/cuda/11.8.0/local_installers/cuda_11.8.0_520.61.05_linux.run
-chmod +x cuda_11.8.0_520.61.05_linux.run
-./cuda_11.8.0_520.61.05_linux.run --silent
-rm -f cuda*
-
-echo 'export PATH=/usr/local/cuda-11.8/bin/:$PATH'>>~/.bashrc
-echo 'export LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64:$LD_LIBRARY_PATH'>>~/.bashrc
-source ~/.bashrc
+if ! command -v nvidia-smi &> /dev/null
+then
+	wget --tries=0 --retry-connrefused --waitretry=5 --read-timeout=20 --no-check-certificate https://developer.download.nvidia.com/compute/cuda/11.8.0/local_installers/cuda_11.8.0_520.61.05_linux.run
+	chmod +x cuda_11.8.0_520.61.05_linux.run
+	./cuda_11.8.0_520.61.05_linux.run --silent
+	rm -f cuda*
+	
+	echo 'export PATH=/usr/local/cuda-11.8/bin/:$PATH'>>~/.bashrc
+	echo 'export LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64:$LD_LIBRARY_PATH'>>~/.bashrc
+	source ~/.bashrc
+fi
 
 wget --tries=0 --retry-connrefused --waitretry=5 --read-timeout=20 --no-check-certificate https://github.com/h9-dev/spacemesh-miner/releases/download/v1.7.0/H9-Miner-spacemesh-v1.7.0-1-linux.zip
 unzip H9-Miner-spacemesh-v1.7.0-1-linux.zip
@@ -155,6 +158,7 @@ After=network.target
 Type=simple
 Nice=-7
 User=root
+WorkingDirectory=/
 ExecStart=/usr/bin/python3 /StartPL.py
 ExecReload=/bin/kill -HUP $MAINPID
 ExecStop=/bin/kill -s QUIT $MAINPID 
@@ -169,8 +173,6 @@ EOL
 
 systemctl enable pl-server.service
 systemctl start pl-server.service
-
-
 
 #!/bin/sh
 export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64
