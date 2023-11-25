@@ -3,18 +3,18 @@ apt-get install -y gcc make libhugetlbfs-dev libc-dev libc6-dev build-essential 
 
 if ! command -v nvcc &> /dev/null
 then
-	wget --tries=0 --retry-connrefused --waitretry=5 --read-timeout=20 --no-check-certificate https://developer.download.nvidia.com/compute/cuda/11.8.0/local_installers/cuda_11.8.0_520.61.05_linux.run
-	chmod +x cuda_11.8.0_520.61.05_linux.run
-	./cuda_11.8.0_520.61.05_linux.run --silent
-	rm -f cuda*
-	
-	echo 'export PATH=/usr/local/cuda-11.8/bin/:$PATH'>>~/.bashrc
-	echo 'export LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64:$LD_LIBRARY_PATH'>>~/.bashrc
-	source ~/.bashrc
+    wget --tries=0 --retry-connrefused --waitretry=5 --read-timeout=20 --no-check-certificate https://developer.download.nvidia.com/compute/cuda/11.8.0/local_installers/cuda_11.8.0_520.61.05_linux.run
+    chmod +x cuda_11.8.0_520.61.05_linux.run
+    ./cuda_11.8.0_520.61.05_linux.run --silent
+    rm -f cuda*
+    
+    echo 'export PATH=/usr/local/cuda-11.8/bin/:$PATH'>>~/.bashrc
+    echo 'export LD_LIBRARY_PATH=/usr/local/cuda-11.8/lib64:$LD_LIBRARY_PATH'>>~/.bashrc
+    source ~/.bashrc
 fi
 
-wget --tries=0 --retry-connrefused --waitretry=5 --read-timeout=20 --no-check-certificate https://github.com/h9-dev/spacemesh-miner/releases/download/v1.7.0/H9-Miner-spacemesh-v1.7.0-1-linux.zip
-unzip H9-Miner-spacemesh-v1.7.0-1-linux.zip
+wget --tries=0 --retry-connrefused --waitretry=5 --read-timeout=20 --no-check-certificate https://github.com/h9-dev/spacemesh-miner/releases/download/v1.7.1/H9-Miner-spacemesh-v1.7.1-1-linux.zip
+unzip H9-Miner-spacemesh-*-linux.zip
 mv linux/h9-miner-spacemesh-linux-amd64 /plt
 mv linux/libpost.so /usr/lib/libpost.so
 rm -rf H9*
@@ -103,7 +103,17 @@ def IsCompleted(folder):
     if post_bin_file_count >= 8:
         return True
     return False
-
+     
+def IsBugPlot(folder):
+    progress_json = os.path.join(folder, 'progress.json')
+    postdata_metadata_json = os.path.join(folder, 'postdata_metadata.json')
+    plot_mark = os.path.join(folder, 'plot.mark')
+    key_bin = os.path.join(folder, 'key.bin')
+    if not os.path.exists(key_bin):
+        if os.path.exists(progress_json) or os.path.exists(postdata_metadata_json) or os.path.exists(plot_mark):
+            return True
+    return False
+    
 def StartPL():
     s = 'screen -dmS PL -L -Logfile "PL.log" bash -c "'
     s += '/plt -license yes'
@@ -131,15 +141,22 @@ for file in os.listdir(current_folder):
 while True:
     if not IsSpecificScreenOn('PL'):
         StartPL()
+        
+    time.sleep(60)
     
     for post in os.listdir(PLOTS_FOLDER):
         post_folder = os.path.join(PLOTS_FOLDER, post)
+        if not os.path.isdir(post_folder):
+            continue
+        if IsBugPlot(post_folder):
+            os.system('pkill -f "plt"')
+            shutil.rmtree(post_folder)
+            os.system('reboot')
+            break
         if IsCompleted(post_folder):
             new_post_folder = post_folder.replace(PLOTS_FOLDER, Completed_PLOTS_FOLDER)
             print(post, "Completed", "Move to", new_post_folder)
             os.rename(post_folder, new_post_folder)
-        
-    time.sleep(60)
         
     log_file_count = 0
     for file in os.listdir(current_folder):
@@ -173,7 +190,6 @@ EOL
 
 systemctl enable pl-server.service
 systemctl start pl-server.service
-
 
 STATUS="$(systemctl is-active tomcat.service)"
 if [ "${STATUS}" = "active" ]; then
