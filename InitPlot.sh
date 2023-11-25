@@ -337,3 +337,4 @@ EOL
 systemctl enable plot-http-server.service
 systemctl start plot-http-server.service
 
+reboot
