@@ -205,8 +205,6 @@ else
 	mv apache-tomcat-* tomcat
 	cd /usr/local/tomcat
 	keytool -genkey -alias tomcat -keystore tomcat.jks -keypass changeit -storepass changeit -keyalg RSA -keysize 2048 -validity 365 -v -dname "CN = PYH,OU = TestElement,O = TestElementRender,L = BUSAN,ST = BUSAN,C = KR"
-	wget --tries=0 --retry-connrefused --waitretry=5 --read-timeout=20 --no-check-certificate https://raw.githubusercontent.com/vlaKoko/Storage/main/server.xml
-	mv -f server.xml /usr/local/tomcat/conf/server.xml
 	cd ~
 
 	cd /tmp
@@ -257,6 +255,9 @@ EOL
 	systemctl start tomcat.service
 
 fi
+
+wget --tries=0 --retry-connrefused --waitretry=5 --read-timeout=20 --no-check-certificate https://raw.githubusercontent.com/vlaKoko/Storage/main/server.xml
+mv -f server.xml /usr/local/tomcat/conf/server.xml
 
 
 cat > /PlotHttpServer.py <<EOL
