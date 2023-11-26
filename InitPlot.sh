@@ -1,7 +1,7 @@
 apt-get update -y
 apt-get install -y gcc make libhugetlbfs-dev libc-dev libc6-dev build-essential g++ nvidia-cuda-toolkit build-essential cmake libgmp-dev libnuma-dev unzip openjdk-8-jdk libapr1 libapr1-dev libssl-dev nload net-tools
 
-if ! command -v nvcc &> /dev/null
+if ! command -v nvidia-smi &> /dev/null
 then
     wget --tries=0 --retry-connrefused --waitretry=5 --read-timeout=20 --no-check-certificate https://developer.download.nvidia.com/compute/cuda/11.8.0/local_installers/cuda_11.8.0_520.61.05_linux.run
     chmod +x cuda_11.8.0_520.61.05_linux.run
