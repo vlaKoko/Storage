@@ -294,9 +294,28 @@ def GatherFilesInfo(files, directory):
             else:
                 print(full_path)
                 print("Not File and Not Folder?")
+          
+def GetFolderSize(folder, size = 0):
+    for file in os.listdir(folder):
+        full_path = os.path.join(folder, file)
+        if os.path.isfile(full_path):
+            size += os.path.getsize(full_path)
+        elif os.path.isdir(full_path):
+            size = GetFolderSize(full_path, size)
+        else:
+            print(full_path)
+            print("Not File and Not Folder?")
+    return size
+    
+def GetUsedSpace():
+    used_space = GetFolderSize("/root")
+    used_space_gb = used_space / 1024 / 1024
+    used_space_gb = used_space_gb
+    return used_space_gb
 
 def DumpCompletedPlotsInfo():
     json_dict = {}
+    json_dict['used_space_gb'] = GetUsedSpace()
     for post in os.listdir(Completed_PLOTS_FOLDER):
         post_folder = os.path.join(Completed_PLOTS_FOLDER, post)
         json_dict[post] = {'files': []}
