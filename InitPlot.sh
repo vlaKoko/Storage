@@ -309,8 +309,8 @@ def GetFolderSize(folder, size = 0):
     
 def GetUsedSpace():
     used_space = GetFolderSize("/root")
-    used_space_gb = used_space / 1024 / 1024
-    used_space_gb = used_space_gb
+    used_space_gb = used_space / 1024 / 1024 / 1024
+    used_space_gb = int(used_space_gb)
     return used_space_gb
 
 def DumpCompletedPlotsInfo():
