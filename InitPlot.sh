@@ -316,10 +316,11 @@ def GetUsedSpace():
 def DumpCompletedPlotsInfo():
     json_dict = {}
     json_dict['used_space_gb'] = GetUsedSpace()
+    json_dict['plots'] = {}
     for post in os.listdir(Completed_PLOTS_FOLDER):
         post_folder = os.path.join(Completed_PLOTS_FOLDER, post)
-        json_dict[post] = {'files': []}
-        GatherFilesInfo(json_dict[post]['files'], post_folder)
+        json_dict['plots'][post] = {'files': []}
+        GatherFilesInfo(json_dict['plots'][post]['files'], post_folder)
     return json.dumps(json_dict)
     
 class HttpHandler(BaseHTTPRequestHandler):
