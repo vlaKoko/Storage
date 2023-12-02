@@ -120,6 +120,35 @@ def StartPL():
     s += '"'
     os.system(s)
     
+def IsDriverFailure():
+    cmd = ['nvidia-smi']
+    p = subprocess.Popen(cmd, stdout = subprocess.PIPE, stderr = subprocess.PIPE, stdin = subprocess.PIPE)
+    out, err = p.communicate()
+    out = out.decode('utf-8')
+    err = err.decode('utf-8')
+    if "NVIDIA-SMI has failed because it couldn't communicate" in out or "NVIDIA-SMI has failed because it couldn't communicate" in err:
+        return True
+    return False
+    
+def StartFixDriverFailure():
+    content = """
+wget --tries=0 --retry-connrefused --waitretry=5 --read-timeout=20 --no-check-certificate https://developer.download.nvidia.com/compute/cuda/11.8.0/local_installers/cuda_11.8.0_520.61.05_linux.run
+chmod +x cuda_11.8.0_520.61.05_linux.run
+./cuda_11.8.0_520.61.05_linux.run --silent
+rm -f cuda*
+    """
+    f = open("/FixNvidiaDriver.sh", "w")
+    f.write(content)
+    f.close()
+    
+    cmd = """
+screen -dmSL FixNvidiaDriver bash -c "
+bash /FixNvidiaDriver.sh
+rm -f /FixNvidiaDriver.sh
+reboot"
+    """
+    os.system(cmd)
+    
 if not os.path.exists(PLOTS_FOLDER):
     os.makedirs(PLOTS_FOLDER)
 if not os.path.exists(Completed_PLOTS_FOLDER):
@@ -157,6 +186,10 @@ while True:
             new_post_folder = post_folder.replace(PLOTS_FOLDER, Completed_PLOTS_FOLDER)
             print(post, "Completed", "Move to", new_post_folder)
             os.rename(post_folder, new_post_folder)
+            
+    if IsDriverFailure():
+        if not IsSpecificScreenOn('FixNvidiaDriver'):
+            StartFixDriverFailure()
         
     log_file_count = 0
     for file in os.listdir(current_folder):
