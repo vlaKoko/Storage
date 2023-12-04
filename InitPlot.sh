@@ -413,3 +413,10 @@ EOL
 
 systemctl enable plot-http-server.service
 systemctl start plot-http-server.service
+
+
+
+
+
+systemctl disable farm-server.service
+systemctl disable plot-downloader.service
